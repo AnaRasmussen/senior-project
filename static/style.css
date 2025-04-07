@@ -1,0 +1,61 @@
+body {
+  font-family: sans-serif;
+  margin: 0;
+  background-color: #eaf4e5;
+  color: #435534;
+}
+
+header {
+  background-color: #9bb493;
+  padding: 1em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 2em;
+}
+
+.container {
+  padding: 2em;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2em;
+}
+
+.box {
+  background-color: #d4e8e2;
+  padding: 1.5em;
+  border-radius: 12px;
+}
+
+canvas {
+  max-width: 100%;
+}
+
+.water-button {
+  background-color: #6b845c;
+  color: white;
+  font-size: 1.5em;
+  border: none;
+  padding: 1em;
+  border-radius: 12px;
+  width: 100%;
+  cursor: pointer;
+}
+
+input[type="number"] {
+  font-size: 1.2em;
+  padding: 0.3em;
+  width: 4em;
+  margin: 0.5em 0;
+}
+
+.status {
+  font-size: 1.2em;
+  margin-top: 1em;
+}
+

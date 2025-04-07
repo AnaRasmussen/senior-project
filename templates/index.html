@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Planters</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Smart Plant Dashboard</h1>
+    <div id="datetime"></div>
+  </header>
+
+  <div class="container">
+    <div class="box">
+      <h2>Soil Moisture Levels</h2>
+      <canvas id="moistureChart"></canvas>
+    </div>
+
+    <div class="box">
+      <h2>Watering History</h2>
+      <ul id="historyList"></ul>
+    </div>
+
+    <div class="box">
+      <h2>Reservoir Levels</h2>
+      <div id="reservoirStatus" class="status">Loading...</div>
+      <button onclick="refillReservoir()">Refill Reservoir</button>
+    </div>
+
+    <div class="box">
+      <label for="duration">Duration (sec):</label>
+      <input type="number" id="duration" value="5" min="1" max="30">
+      <button class="water-button" onclick="manualWater()">WATER NOW</button>
+      <p>Last Watered: <span id="lastWatered">--</span></p>
+    </div>
+  </div>
+
+  <script>
+    const ctx = document.getElementById('moistureChart').getContext('2d');
+    const moistureChart = new Chart(ctx, {
+      type: 'line',
+      data: { labels: [], datasets: [{ label: 'Soil Moisture (%)', data: [], borderColor: '#3c6e71', tension: 0.3 }] },
+      options: { responsive: true, scales: { y: { min: 0, max: 100 } } }
+    });
+
+    function updateDateTime() {
+      document.getElementById('datetime').textContent =
+        new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+    }
+
+    async function fetchDashboard() {
+      const res = await fetch('/dashboard-data');
+      const data = await res.json();
+
+      // Moisture graph
+      moistureChart.data.labels = data.moisture.timestamps;
+      moistureChart.data.datasets[0].data = data.moisture.values;
+      moistureChart.update();
+
+      // History list
+      const historyList = document.getElementById('historyList');
+      historyList.innerHTML = '';
+      data.history.forEach(h => {
+        const li = document.createElement('li');
+        li.textContent = `${h.timestamp}: ${h.event}`;
+        historyList.appendChild(li);
+      });
+
+      // Reservoir
+      document.getElementById('reservoirStatus').textContent = data.reservoir.status;
+
+      // Last watered
+      document.getElementById('lastWatered').textContent = data.last_watered || '--';
+    }
+
+    async function manualWater() {
+      const duration = parseInt(document.getElementById("duration").value) || 5;
+      const res = await fetch("/water", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ duration })
+      });
+      const msg = await res.json();
+      alert(msg.message);
+      fetchDashboard();
+    }
+
+    async function refillReservoir() {
+      await fetch('/refill', { method: 'POST' });
+      alert("Reservoir refilled.");
+      fetchDashboard();
+    }
+
+    updateDateTime();
+    fetchDashboard();
+    setInterval(() => {
+      updateDateTime();
+      fetchDashboard();
+    }, 10000);
+  </script>
+</body>
+</html>
+
