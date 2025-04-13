@@ -107,7 +107,6 @@ GPIO.output(PUMP_PIN, GPIO.LOW)
 def auto_watering_loop():
     try:
         pump_on = False
-        pump_start_time = None
 
         while True:
             conn = sqlite3.connect("plant_data.db")
@@ -124,7 +123,7 @@ def auto_watering_loop():
             if moisture_value <= dry_threshold and not pump_on:
                 GPIO.output(PUMP_PIN, GPIO.HIGH)
                 log_event("Pump ON (auto)", source="auto")
-                pump_start_time = time.time()
+                log_water(2.5)
                 pump_on = True
 
             elif moisture_value >= wet_threshold and pump_on:
@@ -132,27 +131,11 @@ def auto_watering_loop():
                 log_event("Pump OFF (auto)", source="auto")
                 pump_on = False
 
-                run_time = time.time() - pump_start_time
-                oz_used = (run_time / 4) * 2  # 0.5 oz per second
-                log_water(oz_used)
-                update_reservoir_usage(run_time * 10)  # 10ml/sec assumption
-
             time.sleep(10)
 
     except Exception as e:
         print(f"Auto-watering error: {e}")
         GPIO.cleanup()
-
-def update_reservoir_usage(ml_used):
-    conn = sqlite3.connect("plant_data.db")
-    cursor = conn.cursor()
-    cursor.execute("SELECT id, level_ml FROM reservoir ORDER BY id DESC LIMIT 1")
-    row = cursor.fetchone()
-    if row:
-        new_level = max(row[1] - ml_used, 0)
-        cursor.execute("UPDATE reservoir SET level_ml = ? WHERE id = ?", (new_level, row[0]))
-        conn.commit()
-    conn.close()
 
 @app.route('/')
 def dashboard():
@@ -186,9 +169,7 @@ def water_usage():
     cursor.execute("""
         SELECT strftime('%w', timestamp), SUM(amount_oz)
         FROM water_log
-        GROUP BY strftime('%Y-%m-%d', timestamp)
-        ORDER BY DATE(timestamp) DESC
-        LIMIT 7
+        GROUP BY strftime('%w', timestamp)
     """)
     rows = cursor.fetchall()
     conn.close()
@@ -196,23 +177,21 @@ def water_usage():
     day_names = ['Sun', 'Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat']
 
     return jsonify([
-        {"day": day_names[int(r[0])], "amount": round(r[1], 2)} for r in reversed(rows)
+        {"day": day_names[int(r[0])], "amount": round(r[1], 2)} for r in rows
     ])
 
 @app.route('/water', methods=['POST'])
 def water_plant():
     duration = request.json.get("duration", 5) if request.is_json else 5
     duration = min(max(duration, 1), 30)
-    oz_used = (duration / 4) * 2  # 0.5 oz per second
+    oz_used = (duration / 4) * 2
 
     GPIO.output(PUMP_PIN, GPIO.HIGH)
     log_event(f"Pump ON (manual, {duration}s)", source="manual")
+    log_water(oz_used)
     time.sleep(duration)
     GPIO.output(PUMP_PIN, GPIO.LOW)
     log_event("Pump OFF (manual)", source="manual")
-
-    update_reservoir_usage(duration * 10)  # assume 10ml/sec
-    log_water(oz_used)
 
     return jsonify({"message": f"Manually watered for {duration} seconds"})
 

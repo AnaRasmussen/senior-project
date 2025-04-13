@@ -20,10 +20,14 @@
 
 <div class="container">
 
-  <div class="moisture-row">
+  <div class="moisture-layout full-width">
     <div class="box moisture-graph-box">
       <h2>Soil Moisture Levels</h2>
       <canvas id="moistureChart"></canvas>
+    </div>
+
+    <div class="happy-plant-box">
+      <img src="{{ url_for('static', filename='happy-plant.png') }}" alt="Happy Plant" class="happy-plant-inline">
     </div>
   </div>
 
@@ -81,14 +85,14 @@ const moistureChart = new Chart(ctx, {
   }
 });
 
-function updateSliderFill(slider) {
-  const percent = (slider.value - slider.min) / (slider.max - slider.min) * 100;
-  slider.style.setProperty('--value', `${percent}%`);
-}
-
 function updateDateTime() {
   document.getElementById('datetime').textContent =
     new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+}
+
+function updateSliderFill(slider) {
+  const percent = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+  slider.style.setProperty('--value', `${percent}%`);
 }
 
 async function fetchDashboard() {
@@ -138,36 +142,10 @@ async function fetchWaterUsage() {
   usageList.appendChild(row);
 }
 
-async function manualWater() {
-  const duration = parseInt(document.getElementById("duration").value) || 5;
-  const res = await fetch("/water", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ duration })
-  });
-  const msg = await res.json();
-  alert(msg.message);
-  fetchDashboard();
-  fetchWaterUsage();
-}
-
 async function refillReservoir() {
   await fetch('/refill', { method: 'POST' });
   alert("Reservoir refilled.");
   fetchDashboard();
-}
-
-async function fetchThreshold() {
-  const res = await fetch('/threshold');
-  const data = await res.json();
-
-  document.getElementById('drySlider').value = data.dry_threshold;
-  document.getElementById('wetSlider').value = data.wet_threshold;
-  document.getElementById('dryValue').textContent = data.dry_threshold + '%';
-  document.getElementById('wetValue').textContent = data.wet_threshold + '%';
-
-  updateSliderFill(document.getElementById('drySlider'));
-  updateSliderFill(document.getElementById('wetSlider'));
 }
 
 async function saveThreshold() {
@@ -183,28 +161,41 @@ async function saveThreshold() {
   alert(`Thresholds updated: ON <= ${dry}%, OFF >= ${wet}%`);
 }
 
+async function fetchThreshold() {
+  const res = await fetch('/threshold');
+  const data = await res.json();
+
+  document.getElementById('drySlider').value = data.dry_threshold;
+  document.getElementById('wetSlider').value = data.wet_threshold;
+  document.getElementById('dryValue').textContent = data.dry_threshold + '%';
+  document.getElementById('wetValue').textContent = data.wet_threshold + '%';
+
+  updateSliderFill(document.getElementById('drySlider'));
+  updateSliderFill(document.getElementById('wetSlider'));
+}
+
 document.getElementById('drySlider').addEventListener('input', function () {
-  const dry = parseInt(this.value);
-  const wet = parseInt(document.getElementById('wetSlider').value);
+  let dry = parseInt(this.value);
+  let wet = parseInt(document.getElementById('wetSlider').value);
 
   if (dry >= wet) {
-    document.getElementById('wetSlider').value = dry + 1;
-    document.getElementById('wetValue').textContent = (dry + 1) + '%';
-    updateSliderFill(document.getElementById('wetSlider'));
+    dry = wet - 1;
+    this.value = dry;
   }
+
   document.getElementById('dryValue').textContent = dry + '%';
   updateSliderFill(this);
 });
 
 document.getElementById('wetSlider').addEventListener('input', function () {
-  const wet = parseInt(this.value);
-  const dry = parseInt(document.getElementById('drySlider').value);
+  let wet = parseInt(this.value);
+  let dry = parseInt(document.getElementById('drySlider').value);
 
   if (wet <= dry) {
-    document.getElementById('drySlider').value = wet - 1;
-    document.getElementById('dryValue').textContent = (wet - 1) + '%';
-    updateSliderFill(document.getElementById('drySlider'));
+    wet = dry + 1;
+    this.value = wet;
   }
+
   document.getElementById('wetValue').textContent = wet + '%';
   updateSliderFill(this);
 });
