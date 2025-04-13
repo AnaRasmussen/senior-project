@@ -5,101 +5,222 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@1.2.1/dist/chartjs-plugin-zoom.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='icofont/icofont.min.css') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <h1>Smart Plant Dashboard</h1>
-    <div id="datetime"></div>
-  </header>
 
-  <div class="container">
-    <div class="box">
+<header>
+  <h1><i class="icofont-leaf"></i> PLANTERS</h1>
+  <div id="datetime"></div>
+</header>
+
+<div class="container">
+
+  <div class="moisture-row">
+    <div class="box moisture-graph-box">
       <h2>Soil Moisture Levels</h2>
       <canvas id="moistureChart"></canvas>
     </div>
-
-    <div class="box">
-      <h2>Watering History</h2>
-      <ul id="historyList"></ul>
-    </div>
-
-    <div class="box">
-      <h2>Reservoir Levels</h2>
-      <div id="reservoirStatus" class="status">Loading...</div>
-      <button onclick="refillReservoir()">Refill Reservoir</button>
-    </div>
-
-    <div class="box">
-      <label for="duration">Duration (sec):</label>
-      <input type="number" id="duration" value="5" min="1" max="30">
-      <button class="water-button" onclick="manualWater()">WATER NOW</button>
-      <p>Last Watered: <span id="lastWatered">--</span></p>
-    </div>
   </div>
 
-  <script>
-    const ctx = document.getElementById('moistureChart').getContext('2d');
-    const moistureChart = new Chart(ctx, {
-      type: 'line',
-      data: { labels: [], datasets: [{ label: 'Soil Moisture (%)', data: [], borderColor: '#3c6e71', tension: 0.3 }] },
-      options: { responsive: true, scales: { y: { min: 0, max: 100 } } }
-    });
+  <div class="full-width box">
+    <h2>Water Usage History</h2>
+    <div id="waterUsageList" class="water-usage-row"></div>
+  </div>
 
-    function updateDateTime() {
-      document.getElementById('datetime').textContent =
-        new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+  <div class="box">
+    <h2>Reservoir Levels</h2>
+    <div id="reservoirStatus" class="status">Loading...</div>
+    <button onclick="refillReservoir()">Refill Reservoir</button>
+  </div>
+
+  <div class="box">
+    <h2>Moisture Thresholds</h2>
+
+    <label>Turn Pump ON Below: <span id="dryValue">30%</span></label>
+    <input type="range" id="drySlider" min="10" max="80" value="30">
+
+    <label>Turn Pump OFF Above: <span id="wetValue">60%</span></label>
+    <input type="range" id="wetSlider" min="10" max="80" value="60">
+
+    <button onclick="saveThreshold()">Save Thresholds</button>
+  </div>
+
+  <div class="box">
+    <h2>Watering History</h2>
+    <ul id="historyList"></ul>
+  </div>
+
+  <div class="box">
+    <label for="duration">Duration (sec):</label>
+    <input type="number" id="duration" value="5" min="1" max="30">
+    <button class="water-button" onclick="manualWater()">WATER NOW</button>
+    <p>Last Watered: <span id="lastWatered">--</span></p>
+  </div>
+
+</div>
+
+<script>
+const ctx = document.getElementById('moistureChart').getContext('2d');
+const moistureChart = new Chart(ctx, {
+  type: 'line',
+  data: { labels: [], datasets: [{ label: 'Soil Moisture (%)', data: [], borderColor: '#3c6e71', tension: 0.3 }] },
+  options: {
+    responsive: true,
+    scales: { y: { min: 0, max: 100 } },
+    plugins: {
+      zoom: {
+        pan: { enabled: true, mode: 'x' },
+        zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+      }
     }
+  }
+});
 
-    async function fetchDashboard() {
-      const res = await fetch('/dashboard-data');
-      const data = await res.json();
+function updateSliderFill(slider) {
+  const percent = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+  slider.style.setProperty('--value', `${percent}%`);
+}
 
-      // Moisture graph
-      moistureChart.data.labels = data.moisture.timestamps;
-      moistureChart.data.datasets[0].data = data.moisture.values;
-      moistureChart.update();
+function updateDateTime() {
+  document.getElementById('datetime').textContent =
+    new Date().toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' });
+}
 
-      // History list
-      const historyList = document.getElementById('historyList');
-      historyList.innerHTML = '';
-      data.history.forEach(h => {
-        const li = document.createElement('li');
-        li.textContent = `${h.timestamp}: ${h.event}`;
-        historyList.appendChild(li);
-      });
+async function fetchDashboard() {
+  const res = await fetch('/dashboard-data');
+  const data = await res.json();
 
-      // Reservoir
-      document.getElementById('reservoirStatus').textContent = data.reservoir.status;
+  moistureChart.data.labels = data.moisture.timestamps;
+  moistureChart.data.datasets[0].data = data.moisture.values;
+  moistureChart.update();
 
-      // Last watered
-      document.getElementById('lastWatered').textContent = data.last_watered || '--';
-    }
+  const historyList = document.getElementById('historyList');
+  historyList.innerHTML = '';
+  data.history.forEach(h => {
+    const li = document.createElement('li');
+    li.textContent = `${h.timestamp}: ${h.event}`;
+    historyList.appendChild(li);
+  });
 
-    async function manualWater() {
-      const duration = parseInt(document.getElementById("duration").value) || 5;
-      const res = await fetch("/water", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ duration })
-      });
-      const msg = await res.json();
-      alert(msg.message);
-      fetchDashboard();
-    }
+  document.getElementById('reservoirStatus').textContent = data.reservoir.status;
+  document.getElementById('lastWatered').textContent = data.last_watered || '--';
+}
 
-    async function refillReservoir() {
-      await fetch('/refill', { method: 'POST' });
-      alert("Reservoir refilled.");
-      fetchDashboard();
-    }
+async function fetchWaterUsage() {
+  const res = await fetch('/water-usage');
+  const data = await res.json();
 
-    updateDateTime();
-    fetchDashboard();
-    setInterval(() => {
-      updateDateTime();
-      fetchDashboard();
-    }, 10000);
-  </script>
+  const usageList = document.getElementById('waterUsageList');
+  usageList.innerHTML = '';
+
+  const row = document.createElement('div');
+  row.style.display = 'flex';
+  row.style.justifyContent = 'space-around';
+  row.style.textAlign = 'center';
+  row.style.width = '100%';
+
+  const allDays = ['Sun', 'Mon', 'Tues', 'Wed', 'Thur', 'Fri', 'Sat'];
+
+  allDays.forEach(day => {
+    const match = data.find(d => d.day === day);
+    const amount = match ? match.amount : '-';
+
+    const item = document.createElement('div');
+    item.innerHTML = `<strong>${day}</strong><br>${amount} oz`;
+    row.appendChild(item);
+  });
+
+  usageList.appendChild(row);
+}
+
+async function manualWater() {
+  const duration = parseInt(document.getElementById("duration").value) || 5;
+  const res = await fetch("/water", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ duration })
+  });
+  const msg = await res.json();
+  alert(msg.message);
+  fetchDashboard();
+  fetchWaterUsage();
+}
+
+async function refillReservoir() {
+  await fetch('/refill', { method: 'POST' });
+  alert("Reservoir refilled.");
+  fetchDashboard();
+}
+
+async function fetchThreshold() {
+  const res = await fetch('/threshold');
+  const data = await res.json();
+
+  document.getElementById('drySlider').value = data.dry_threshold;
+  document.getElementById('wetSlider').value = data.wet_threshold;
+  document.getElementById('dryValue').textContent = data.dry_threshold + '%';
+  document.getElementById('wetValue').textContent = data.wet_threshold + '%';
+
+  updateSliderFill(document.getElementById('drySlider'));
+  updateSliderFill(document.getElementById('wetSlider'));
+}
+
+async function saveThreshold() {
+  const dry = parseInt(document.getElementById('drySlider').value);
+  const wet = parseInt(document.getElementById('wetSlider').value);
+
+  await fetch('/threshold', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ dry_threshold: dry, wet_threshold: wet })
+  });
+
+  alert(`Thresholds updated: ON <= ${dry}%, OFF >= ${wet}%`);
+}
+
+document.getElementById('drySlider').addEventListener('input', function () {
+  const dry = parseInt(this.value);
+  const wet = parseInt(document.getElementById('wetSlider').value);
+
+  if (dry >= wet) {
+    document.getElementById('wetSlider').value = dry + 1;
+    document.getElementById('wetValue').textContent = (dry + 1) + '%';
+    updateSliderFill(document.getElementById('wetSlider'));
+  }
+  document.getElementById('dryValue').textContent = dry + '%';
+  updateSliderFill(this);
+});
+
+document.getElementById('wetSlider').addEventListener('input', function () {
+  const wet = parseInt(this.value);
+  const dry = parseInt(document.getElementById('drySlider').value);
+
+  if (wet <= dry) {
+    document.getElementById('drySlider').value = wet - 1;
+    document.getElementById('dryValue').textContent = (wet - 1) + '%';
+    updateSliderFill(document.getElementById('drySlider'));
+  }
+  document.getElementById('wetValue').textContent = wet + '%';
+  updateSliderFill(this);
+});
+
+updateDateTime();
+fetchDashboard();
+fetchWaterUsage();
+fetchThreshold();
+
+setInterval(() => {
+  updateDateTime();
+  fetchDashboard();
+  fetchWaterUsage();
+}, 10000);
+</script>
+
 </body>
 </html>
 

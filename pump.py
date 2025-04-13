@@ -15,7 +15,7 @@ try:
         GPIO.output(IN1, GPIO.HIGH)
         GPIO.output(IN2, GPIO.LOW)
         print("Pump ON")
-        sleep(5)  # Run pump for 5 seconds
+        sleep(4)  # Run pump for 5 seconds
 
         # Turn the pump OFF
         GPIO.output(IN1, GPIO.LOW)

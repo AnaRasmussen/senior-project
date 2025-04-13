@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg">
+<defs>
+<font id="icofont" horiz-adv-x="1000" >
+<font-face font-family="IcoFont" font-weight="400" font-style="Regular" units-per-em="1000" ascent="850" descent="-150" />
+<missing-glyph horiz-adv-x="1000" />
+<glyph glyph-name="leaf" horiz-adv-x="1000" unicode="&#xef5e;" d="M934 653s-101-32-188-21c-645 76-608-424-601-429 0 0 57 38 114 48 359 61 524 256 524 256s-193-237-510-286c-70-11-150-84-210-167 0 0 44-3 61-7 26 37 58 68 97 92 307-203 545 6 605 91 142 200 108 423 108 423z" />
+</font>
+</defs>
+</svg>
