@@ -131,7 +131,7 @@ def auto_watering_loop():
                 log_event("Pump OFF (auto)", source="auto")
                 pump_on = False
 
-            time.sleep(10)
+            time.sleep(1)
 
     except Exception as e:
         print(f"Auto-watering error: {e}")

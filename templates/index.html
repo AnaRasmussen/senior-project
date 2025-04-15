@@ -78,8 +78,20 @@ const moistureChart = new Chart(ctx, {
     scales: { y: { min: 0, max: 100 } },
     plugins: {
       zoom: {
-        pan: { enabled: true, mode: 'x' },
-        zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+        pan: {
+          enabled: true,
+          mode: 'x',
+          modifierKey: null // no key required, just click and drag
+        },
+        zoom: {
+          wheel: {
+            enabled: true
+          },
+          pinch: {
+            enabled: true
+          },
+          mode: 'x'
+        }
       }
     }
   }
@@ -209,7 +221,7 @@ setInterval(() => {
   updateDateTime();
   fetchDashboard();
   fetchWaterUsage();
-}, 10000);
+}, 2000); //every 2 seconds
 </script>
 
 </body>

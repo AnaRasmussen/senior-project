@@ -14,6 +14,7 @@ header {
   align-items: center;
   color: white;
   min-height: 50px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
 }
 
 header h1 {
@@ -46,6 +47,13 @@ h1 i {
   background-color: #d7e8e0;
   padding: 2em;
   border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
 }
 
 canvas {
@@ -65,12 +73,14 @@ button {
   display: block;
   margin: 0.5em auto;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background-color 0.3s ease, transform 0.2s ease;
   font-size: 1em;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
 }
 
 button:hover {
   background-color: #5a7350;
+  transform: translateY(-1px);
 }
 
 .water-button {
@@ -128,8 +138,8 @@ input[type="range"] {
   border-radius: 5px;
   outline: none;
   transition: background 0.3s ease;
+  background: linear-gradient(to right, #100582 0%, #100582 var(--value, 50%), white var(--value, 50%), white 100%);
 }
-
 
 input[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
@@ -149,17 +159,6 @@ input[type="range"]::-moz-range-thumb {
   cursor: pointer;
 }
 
-input[type="range"] {
-  -webkit-appearance: none;
-  width: 100%;
-  height: 8px;
-  border-radius: 5px;
-  background: linear-gradient(to right, #100582 0%, #100582 var(--value, 50%), white var(--value, 50%), white 100%);
-  outline: none;
-  transition: background 0.3s ease;
-}
-
-
 @media (max-width: 900px) {
   .container {
     grid-template-columns: 1fr;
@@ -170,19 +169,19 @@ input[type="range"] {
 .moisture-row {
   display: flex;
   justify-content: flex-start;
-  gap: 4em; /* space between graph and right side */
+  gap: 4em;
   margin-bottom: 2em;
 }
 
 .moisture-graph-box {
-  flex: 1 1 60%;  /* Graph takes ~60% of the width */
+  flex: 1 1 60%;
   max-width: 800px;
 }
 
 .moisture-layout {
   display: grid;
   grid-template-columns: 2fr 1fr;
-  align-items: stretch; /* <-- Important: match heights */
+  align-items: stretch;
   gap: 4em;
   margin-bottom: 2em;
 }
@@ -195,7 +194,8 @@ input[type="range"] {
 }
 
 .happy-plant-inline {
-  height: 100%;       /* fill parent height */
-  max-width: 100%;    /* prevent overflow */
-  object-fit: contain; /* preserve aspect ratio while filling height */
+  height: 100%;
+  max-width: 100%;
+  object-fit: contain;
 }
+
