@@ -15,8 +15,8 @@ Planters is a smart plant monitoring and watering system powered by a Raspberry 
 ## Hardware Used
 
 - Raspberry Pi (tested on Pi 3 Model B+)
-- Capacitive Soil Moisture Sensor (YL-69 or FC-28 with MCP3008)
-- Water pump and relay module
+- LM393 3.3V-5V Soil Moisture Sensor
+- EK1893 Mini Submersible Water pump and relay module
 - MCP3008 ADC for analog input
 - Optional: tubing and reservoir setup
 
@@ -40,7 +40,7 @@ Planters is a smart plant monitoring and watering system powered by a Raspberry 
 
 ## Activating the Project
 - python3 server.py
-- got to http://192.168.0.26:5000/ to see data
+- go to http://<raspberry-pi-ip>:5000 to see data
 
 ## File Structure
 - server.py: Main Flask app and GPIO logic
