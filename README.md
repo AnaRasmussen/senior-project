@@ -47,3 +47,6 @@ Planters is a smart plant monitoring and watering system powered by a Raspberry 
 - static/: CSS and image assets
 - templates/index.html: Frontend dashboard
 - plant_data.db: SQLite database storing thresholds, history, and reservoir data
+
+
+![Screenshot](dashboard.png)
