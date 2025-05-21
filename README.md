@@ -40,7 +40,8 @@ Planters is a smart plant monitoring and watering system powered by a Raspberry 
 
 ## Activating the Project
 - python3 server.py
-- go to http://<raspberry-pi-ip>:5000 to see data
+- go to http://(raspberry-pi-ip):5000 to see data
+- where the rasperry-pi-ip is the ip of the raspberry pi
 
 ## File Structure
 - server.py: Main Flask app and GPIO logic
